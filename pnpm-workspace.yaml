@@ -1,0 +1,6 @@
+packages:
+  - 'apps/*'
+
+# Allow esbuild (used by Vite) to run its install script to fetch its native binary.
+onlyBuiltDependencies:
+  - esbuild

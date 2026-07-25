@@ -1,0 +1,17 @@
+{
+  "name": "ase-os",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ASE-OS validation product — local AI video editing MVP (Phase 1)",
+  "packageManager": "pnpm@11.17.0",
+  "scripts": {
+    "dev": "pnpm --parallel -r dev",
+    "dev:web": "pnpm --filter @ase-os/web dev",
+    "dev:api": "pnpm --filter @ase-os/api dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
