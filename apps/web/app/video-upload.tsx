@@ -187,7 +187,20 @@ export function VideoUpload() {
       {subtitles.kind === 'done' && (
         <div style={{ marginTop: '1rem' }}>
           <h3>Subtitles</h3>
-          <p style={{ color: '#666' }}>engine: {subtitles.data.engine}</p>
+          <p style={{ color: '#666' }}>
+            engine: {subtitles.data.engine}
+            {subtitles.data.segments.length > 0 && (
+              <>
+                {' · '}
+                <a href={apiUrl(`/api/videos/${subtitles.data.videoId}/subtitles.srt`)}>
+                  SRT
+                </a>{' '}
+                <a href={apiUrl(`/api/videos/${subtitles.data.videoId}/subtitles.vtt`)}>
+                  VTT
+                </a>
+              </>
+            )}
+          </p>
           {subtitles.data.segments.length === 0 ? (
             <p>No speech detected.</p>
           ) : (

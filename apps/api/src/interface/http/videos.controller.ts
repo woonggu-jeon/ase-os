@@ -4,6 +4,7 @@ import {
   BadRequestException,
   Controller,
   Get,
+  Header,
   HttpCode,
   NotFoundException,
   Param,
@@ -21,6 +22,8 @@ import {
   MAX_VIDEO_SIZE_BYTES,
   isAllowedVideoMimeType,
   toVideoView,
+  toSrt,
+  toVtt,
   type SceneList,
   type SubtitleTrack,
   type Timeline,
@@ -106,6 +109,20 @@ export class VideosController {
   @Get(':id/subtitles')
   getSubtitles(@Param('id') id: string): SubtitleTrack {
     return this.subtitles.get(id);
+  }
+
+  @Get(':id/subtitles.srt')
+  @Header('Content-Type', 'application/x-subrip; charset=utf-8')
+  @Header('Content-Disposition', 'attachment; filename="subtitles.srt"')
+  exportSrt(@Param('id') id: string): string {
+    return toSrt(this.subtitles.get(id).segments);
+  }
+
+  @Get(':id/subtitles.vtt')
+  @Header('Content-Type', 'text/vtt; charset=utf-8')
+  @Header('Content-Disposition', 'attachment; filename="subtitles.vtt"')
+  exportVtt(@Param('id') id: string): string {
+    return toVtt(this.subtitles.get(id).segments);
   }
 
   @Post(':id/scenes')
