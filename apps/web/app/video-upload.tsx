@@ -56,6 +56,7 @@ export function VideoUpload() {
   const [subtitles, setSubtitles] = useState<AsyncState<SubtitleTrack>>({ kind: 'idle' });
   const [scenes, setScenes] = useState<AsyncState<SceneList>>({ kind: 'idle' });
   const [timeline, setTimeline] = useState<AsyncState<Timeline>>({ kind: 'idle' });
+  const [sceneThreshold, setSceneThreshold] = useState(0.4);
 
   function handleSelect(event: ChangeEvent<HTMLInputElement>): void {
     setFile(event.target.files?.[0] ?? null);
@@ -140,11 +141,28 @@ export function VideoUpload() {
             </button>
             <button
               type="button"
-              onClick={() => void run(`/api/videos/${upload.video.id}/scenes`, setScenes)}
+              onClick={() =>
+                void run(
+                  `/api/videos/${upload.video.id}/scenes?threshold=${sceneThreshold}`,
+                  setScenes,
+                )
+              }
               disabled={scenes.kind === 'running'}
             >
               {scenes.kind === 'running' ? 'Detecting…' : 'Detect scenes'}
             </button>
+            <label style={{ fontSize: 12, color: '#555', display: 'flex', gap: 4 }}>
+              threshold
+              <input
+                type="number"
+                min={0.1}
+                max={1}
+                step={0.05}
+                value={sceneThreshold}
+                onChange={(e) => setSceneThreshold(Number(e.target.value))}
+                style={{ width: 64 }}
+              />
+            </label>
             <button
               type="button"
               onClick={() =>

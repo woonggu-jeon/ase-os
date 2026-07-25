@@ -11,13 +11,21 @@ export class DetectScenesService {
     @Inject(SCENE_REPOSITORY) private readonly scenes: SceneRepository,
   ) {}
 
-  async detect(videoId: string): Promise<SceneList> {
+  async detect(videoId: string, thresholdOverride?: number): Promise<SceneList> {
     const video = this.videos.findById(videoId);
     if (!video) {
       throw new NotFoundException('Video not found');
     }
 
-    const threshold = Number(process.env.SCENE_THRESHOLD) || DEFAULT_SCENE_THRESHOLD;
+    const envThreshold = Number(process.env.SCENE_THRESHOLD);
+    const raw =
+      thresholdOverride ??
+      (Number.isFinite(envThreshold) && envThreshold > 0
+        ? envThreshold
+        : DEFAULT_SCENE_THRESHOLD);
+    // Keep within a sane range so a bad input can't disable detection.
+    const threshold = Math.min(1, Math.max(0.05, raw));
+
     const detected = await detectScenes(video.storedPath, threshold);
     const scenes: Scene[] = detected.map((s) => ({
       index: s.index,

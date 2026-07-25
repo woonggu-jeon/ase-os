@@ -8,6 +8,7 @@ import {
   NotFoundException,
   Param,
   Post,
+  Query,
   Res,
   UploadedFile,
   UseInterceptors,
@@ -109,8 +110,12 @@ export class VideosController {
 
   @Post(':id/scenes')
   @HttpCode(201)
-  detectScenes(@Param('id') id: string): Promise<SceneList> {
-    return this.scenes.detect(id);
+  detectScenes(
+    @Param('id') id: string,
+    @Query('threshold') threshold?: string,
+  ): Promise<SceneList> {
+    const t = threshold === undefined ? undefined : Number(threshold);
+    return this.scenes.detect(id, Number.isFinite(t) ? t : undefined);
   }
 
   @Get(':id/scenes')

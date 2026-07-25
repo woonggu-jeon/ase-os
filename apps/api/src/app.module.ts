@@ -38,7 +38,10 @@ import { SqliteSceneRepository } from './infrastructure/persistence/sqlite-scene
       useFactory: (): TranscriptionProvider =>
         process.env.TRANSCRIPTION_ENGINE === 'mock'
           ? new MockTranscriptionProvider()
-          : new WhisperCppProvider(process.env.WHISPER_MODEL ?? 'base'),
+          : new WhisperCppProvider(
+              process.env.WHISPER_MODEL ?? 'base',
+              process.env.WHISPER_LANGUAGE ?? 'auto',
+            ),
     },
   ],
 })

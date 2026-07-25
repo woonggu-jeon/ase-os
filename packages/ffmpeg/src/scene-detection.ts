@@ -9,19 +9,20 @@ export interface DetectedScene {
 /** Default ffmpeg scene-change score threshold (0..1). Higher = fewer cuts. */
 export const DEFAULT_SCENE_THRESHOLD = 0.4;
 
-/**
- * Detect scene boundaries in a local media file using ffmpeg's `scene` filter.
- * Returns contiguous scenes covering [0, duration]. Free/offline (local ffmpeg).
- */
-export async function detectScenes(
-  mediaPath: string,
-  threshold: number = DEFAULT_SCENE_THRESHOLD,
-): Promise<DetectedScene[]> {
-  const duration = await probeDurationSec(mediaPath);
-  const cutTimes = await sceneCutTimes(mediaPath, threshold);
+function round2(value: number): number {
+  return Math.round(value * 100) / 100;
+}
 
-  const boundaries = [0, ...cutTimes, duration].filter(
-    (t) => Number.isFinite(t) && t >= 0 && t <= duration,
+/**
+ * Pure: turn scene-change cut times into contiguous scenes covering [0, duration].
+ * Exported for unit testing (no ffmpeg needed).
+ */
+export function buildScenesFromCuts(
+  cutTimes: readonly number[],
+  durationSec: number,
+): DetectedScene[] {
+  const boundaries = [0, ...cutTimes, durationSec].filter(
+    (t) => Number.isFinite(t) && t >= 0 && t <= durationSec,
   );
   const sorted = [...new Set(boundaries)].sort((a, b) => a - b);
 
@@ -33,12 +34,25 @@ export async function detectScenes(
     scenes.push({ index: scenes.length, startSec: round2(start), endSec: round2(end) });
   }
 
-  // Fallback: a video with no detected cuts is a single scene.
-  if (scenes.length === 0 && duration > 0) {
-    scenes.push({ index: 0, startSec: 0, endSec: round2(duration) });
+  // A clip with no detected cuts is a single scene.
+  if (scenes.length === 0 && durationSec > 0) {
+    scenes.push({ index: 0, startSec: 0, endSec: round2(durationSec) });
   }
 
   return scenes;
+}
+
+/**
+ * Detect scene boundaries in a local media file using ffmpeg's `scene` filter.
+ * Free/offline (local ffmpeg).
+ */
+export async function detectScenes(
+  mediaPath: string,
+  threshold: number = DEFAULT_SCENE_THRESHOLD,
+): Promise<DetectedScene[]> {
+  const duration = await probeDurationSec(mediaPath);
+  const cutTimes = await sceneCutTimes(mediaPath, threshold);
+  return buildScenesFromCuts(cutTimes, duration);
 }
 
 async function probeDurationSec(mediaPath: string): Promise<number> {
@@ -75,8 +89,4 @@ async function sceneCutTimes(mediaPath: string, threshold: number): Promise<numb
     if (Number.isFinite(value)) times.push(value);
   }
   return times;
-}
-
-function round2(value: number): number {
-  return Math.round(value * 100) / 100;
 }

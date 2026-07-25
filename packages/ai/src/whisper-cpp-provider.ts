@@ -7,25 +7,31 @@ import type {
   TranscriptionResult,
   TranscriptionSegment,
 } from './transcription-provider';
+import { cleanSegments, parseWhisperSrt } from './segments';
 
 /**
  * Free, offline transcription using Whisper.cpp via nodejs-whisper (see ADR 0003).
  * The model and whisper.cpp binary are downloaded/built once on first use.
  *
- * Default model is multilingual `tiny`. Pass a larger model (`base`, `small`) for
- * higher accuracy — still free/local.
+ * `model`: multilingual `tiny` | `base` (default) | `small` ... — larger = more accurate.
+ * `language`: `auto` (detect) or a code like `en`, `ko`.
  */
 export class WhisperCppProvider implements TranscriptionProvider {
   readonly #model: string;
+  readonly #language: string;
 
-  constructor(model = 'base') {
+  constructor(model = 'base', language = 'auto') {
     this.#model = model;
+    this.#language = language;
   }
 
   async transcribe(mediaPath: string): Promise<TranscriptionResult> {
+    const engine = `whisper.cpp:${this.#model}`;
+    const language = this.#language === 'auto' ? null : this.#language;
+
     // A video with no audio track has nothing to transcribe.
     if (!(await hasAudioStream(mediaPath))) {
-      return { language: null, engine: `whisper.cpp:${this.#model}`, segments: [] };
+      return { language, engine, segments: [] };
     }
 
     const wavPath = await extractWav16k(mediaPath);
@@ -44,16 +50,13 @@ export class WhisperCppProvider implements TranscriptionProvider {
           outputInVtt: false,
           outputInCsv: false,
           translateToEnglish: false,
+          language: this.#language,
           wordTimestamps: false,
           splitOnWord: true,
         },
       });
 
-      return {
-        language: null,
-        engine: `whisper.cpp:${this.#model}`,
-        segments: readSegments(dir),
-      };
+      return { language, engine, segments: cleanSegments(readSegments(dir)) };
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -80,47 +83,14 @@ function readSegments(dir: string): TranscriptionSegment[] {
     return (parsed.transcription ?? []).map((item) => ({
       startSec: (item.offsets?.from ?? 0) / 1000,
       endSec: (item.offsets?.to ?? 0) / 1000,
-      text: (item.text ?? '').trim(),
+      text: item.text ?? '',
     }));
   }
 
   const srtFile = files.find((f) => f.endsWith('.srt'));
   if (srtFile) {
-    return parseSrt(readFileSync(path.join(dir, srtFile), 'utf8'));
+    return parseWhisperSrt(readFileSync(path.join(dir, srtFile), 'utf8'));
   }
 
   return [];
-}
-
-const SRT_TIME =
-  /(\d{2}):(\d{2}):(\d{2})[,.](\d{3})\s*-->\s*(\d{2}):(\d{2}):(\d{2})[,.](\d{3})/;
-
-function parseSrt(srt: string): TranscriptionSegment[] {
-  const segments: TranscriptionSegment[] = [];
-
-  for (const block of srt.split(/\r?\n\r?\n/)) {
-    const lines = block.split(/\r?\n/).filter((l) => l.trim() !== '');
-    const timeLine = lines.find((l) => SRT_TIME.test(l));
-    if (!timeLine) continue;
-    const m = SRT_TIME.exec(timeLine);
-    if (!m) continue;
-
-    const text = lines
-      .slice(lines.indexOf(timeLine) + 1)
-      .join(' ')
-      .trim();
-    if (text) {
-      segments.push({
-        startSec: toSeconds(m[1], m[2], m[3], m[4]),
-        endSec: toSeconds(m[5], m[6], m[7], m[8]),
-        text,
-      });
-    }
-  }
-
-  return segments;
-}
-
-function toSeconds(h: string, m: string, s: string, ms: string): number {
-  return Number(h) * 3600 + Number(m) * 60 + Number(s) + Number(ms) / 1000;
 }
