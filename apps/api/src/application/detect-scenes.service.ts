@@ -1,8 +1,10 @@
+import { mkdirSync, rmSync } from 'node:fs';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type { Scene, SceneList } from '@ase-os/shared';
-import { detectScenes, DEFAULT_SCENE_THRESHOLD } from '@ase-os/ffmpeg';
+import { detectScenes, extractFrame, DEFAULT_SCENE_THRESHOLD } from '@ase-os/ffmpeg';
 import { VIDEO_REPOSITORY, type VideoRepository } from './video-repository';
 import { SCENE_REPOSITORY, type SceneRepository } from './scene-repository';
+import { thumbnailsDir, thumbnailPath } from '../infrastructure/thumbnails';
 
 @Injectable()
 export class DetectScenesService {
@@ -33,6 +35,8 @@ export class DetectScenesService {
       endSec: s.endSec,
     }));
 
+    await this.generateThumbnails(videoId, video.storedPath, scenes);
+
     const list: SceneList = {
       videoId,
       engine: `ffmpeg-scene:${threshold}`,
@@ -42,6 +46,22 @@ export class DetectScenesService {
 
     this.scenes.save(list);
     return list;
+  }
+
+  /** Best-effort: one JPEG per scene (midpoint). Failures don't fail detection. */
+  private async generateThumbnails(
+    videoId: string,
+    storedPath: string,
+    scenes: readonly Scene[],
+  ): Promise<void> {
+    const dir = thumbnailsDir(videoId);
+    rmSync(dir, { recursive: true, force: true });
+    mkdirSync(dir, { recursive: true });
+    await Promise.allSettled(
+      scenes.map((s) =>
+        extractFrame(storedPath, (s.startSec + s.endSec) / 2, thumbnailPath(videoId, s.index)),
+      ),
+    );
   }
 
   get(videoId: string): SceneList {

@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
+import { thumbnailPath } from '../../infrastructure/thumbnails';
 import {
   BadRequestException,
   Controller,
@@ -138,6 +139,20 @@ export class VideosController {
   @Get(':id/scenes')
   getScenes(@Param('id') id: string): SceneList {
     return this.scenes.get(id);
+  }
+
+  @Get(':id/scenes/:index/thumbnail')
+  sceneThumbnail(
+    @Param('id') id: string,
+    @Param('index') index: string,
+    @Res() res: Response,
+  ): void {
+    const file = thumbnailPath(id, Number(index));
+    if (!existsSync(file)) {
+      res.status(404).json({ message: 'Thumbnail not found' });
+      return;
+    }
+    res.sendFile(file);
   }
 
   // Timeline is a projection over metadata + scenes + subtitles, built on demand.

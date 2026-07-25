@@ -89,6 +89,27 @@ export function VideoPreview({ videoId }: { videoId: string }) {
 
       {timeline && duration > 0 && (
         <div style={{ maxWidth: 640, marginTop: 8 }}>
+          <div style={{ display: 'flex', gap: 4, overflowX: 'auto', marginBottom: 6 }}>
+            {timeline.clips.map((clip) => (
+              <img
+                key={clip.index}
+                src={apiUrl(`/api/videos/${videoId}/scenes/${clip.index}/thumbnail`)}
+                alt={`Scene ${clip.index + 1}`}
+                title={`Scene #${clip.index + 1}`}
+                onClick={() => seek(clip.startSec)}
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+                style={{
+                  height: 48,
+                  borderRadius: 4,
+                  border: '1px solid #ccc',
+                  cursor: 'pointer',
+                  flex: '0 0 auto',
+                }}
+              />
+            ))}
+          </div>
           <div style={{ display: 'flex', height: 28, border: '1px solid #ccc' }}>
             {timeline.clips.map((clip) => {
               const active = current >= clip.startSec && current < clip.endSec;
