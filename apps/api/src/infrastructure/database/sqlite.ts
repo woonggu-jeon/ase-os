@@ -45,6 +45,13 @@ export function createDatabase(): Db {
       detected_at TEXT NOT NULL,
       FOREIGN KEY (video_id) REFERENCES videos(id)
     );
+
+    CREATE TABLE IF NOT EXISTS timelines (
+      video_id      TEXT PRIMARY KEY,
+      timeline_json TEXT NOT NULL,
+      updated_at    TEXT NOT NULL,
+      FOREIGN KEY (video_id) REFERENCES videos(id)
+    );
   `);
 
   return db;

@@ -3,13 +3,16 @@ import path from 'node:path';
 import { thumbnailPath } from '../../infrastructure/thumbnails';
 import {
   BadRequestException,
+  Body,
   Controller,
+  Delete,
   Get,
   Header,
   HttpCode,
   NotFoundException,
   Param,
   Post,
+  Put,
   Query,
   Res,
   UploadedFile,
@@ -33,7 +36,7 @@ import {
 import { UploadVideoService } from '../../application/upload-video.service';
 import { GenerateSubtitlesService } from '../../application/generate-subtitles.service';
 import { DetectScenesService } from '../../application/detect-scenes.service';
-import { BuildTimelineService } from '../../application/build-timeline.service';
+import { TimelineService } from '../../application/timeline.service';
 
 const UPLOAD_DIR = path.resolve(process.cwd(), 'uploads');
 
@@ -66,7 +69,7 @@ export class VideosController {
     private readonly uploads: UploadVideoService,
     private readonly subtitles: GenerateSubtitlesService,
     private readonly scenes: DetectScenesService,
-    private readonly timeline: BuildTimelineService,
+    private readonly timeline: TimelineService,
   ) {}
 
   @Post()
@@ -155,10 +158,20 @@ export class VideosController {
     res.sendFile(file);
   }
 
-  // Timeline is a projection over metadata + scenes + subtitles, built on demand.
+  // Timeline: saved edit if present, else the projection over metadata/scenes/subtitles.
   @Get(':id/timeline')
   getTimeline(@Param('id') id: string): Timeline {
-    return this.timeline.build(id);
+    return this.timeline.get(id);
+  }
+
+  @Put(':id/timeline')
+  saveTimeline(@Param('id') id: string, @Body() body: unknown): Timeline {
+    return this.timeline.save(id, body);
+  }
+
+  @Delete(':id/timeline')
+  resetTimeline(@Param('id') id: string): Timeline {
+    return this.timeline.reset(id);
   }
 
   // Serve the stored video file for playback. res.sendFile handles Range requests

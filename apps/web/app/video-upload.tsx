@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, type ChangeEvent } from 'react';
-import type { SceneList, SubtitleTrack, Timeline, VideoView } from '@ase-os/shared';
+import type { SceneList, SubtitleTrack, VideoView } from '@ase-os/shared';
 import { VideoPreview } from './video-preview';
+import { TimelineEditor } from './timeline-editor';
 import { apiUrl } from './api-base';
 
 type UploadState =
@@ -55,7 +56,6 @@ export function VideoUpload() {
   const [upload, setUpload] = useState<UploadState>({ kind: 'idle' });
   const [subtitles, setSubtitles] = useState<AsyncState<SubtitleTrack>>({ kind: 'idle' });
   const [scenes, setScenes] = useState<AsyncState<SceneList>>({ kind: 'idle' });
-  const [timeline, setTimeline] = useState<AsyncState<Timeline>>({ kind: 'idle' });
   const [sceneThreshold, setSceneThreshold] = useState(0.4);
 
   function handleSelect(event: ChangeEvent<HTMLInputElement>): void {
@@ -63,7 +63,6 @@ export function VideoUpload() {
     setUpload({ kind: 'idle' });
     setSubtitles({ kind: 'idle' });
     setScenes({ kind: 'idle' });
-    setTimeline({ kind: 'idle' });
   }
 
   async function handleUpload(): Promise<void> {
@@ -163,15 +162,6 @@ export function VideoUpload() {
                 style={{ width: 64 }}
               />
             </label>
-            <button
-              type="button"
-              onClick={() =>
-                void run(`/api/videos/${upload.video.id}/timeline`, setTimeline, 'GET')
-              }
-              disabled={timeline.kind === 'running'}
-            >
-              {timeline.kind === 'running' ? 'Building…' : 'Build timeline'}
-            </button>
           </div>
           {subtitles.kind === 'running' && (
             <p>
@@ -180,6 +170,7 @@ export function VideoUpload() {
           )}
           {scenes.kind === 'running' && <p>Detecting scenes locally with FFmpeg…</p>}
           <VideoPreview videoId={upload.video.id} />
+          <TimelineEditor videoId={upload.video.id} />
         </div>
       )}
       {upload.kind === 'error' && <p>❌ {upload.message}</p>}
@@ -238,28 +229,6 @@ export function VideoUpload() {
         </div>
       )}
       {scenes.kind === 'error' && <p>❌ {scenes.message}</p>}
-
-      {timeline.kind === 'done' && (
-        <div style={{ marginTop: '1rem' }}>
-          <h3>Timeline JSON</h3>
-          <p style={{ color: '#666' }}>
-            {formatTime(timeline.data.durationSec)} · {timeline.data.clips.length} clip(s) ·{' '}
-            {timeline.data.subtitles.length} subtitle(s)
-          </p>
-          <pre
-            style={{
-              background: '#f4f4f4',
-              padding: '0.75rem',
-              borderRadius: 6,
-              overflowX: 'auto',
-              fontSize: 12,
-            }}
-          >
-            {JSON.stringify(timeline.data, null, 2)}
-          </pre>
-        </div>
-      )}
-      {timeline.kind === 'error' && <p>❌ {timeline.message}</p>}
     </section>
   );
 }
