@@ -1,5 +1,9 @@
 import { Module } from '@nestjs/common';
-import { WhisperCppProvider } from '@ase-os/ai';
+import {
+  MockTranscriptionProvider,
+  WhisperCppProvider,
+  type TranscriptionProvider,
+} from '@ase-os/ai';
 import { HealthController } from './interface/http/health.controller';
 import { VideosController } from './interface/http/videos.controller';
 import { UploadVideoService } from './application/upload-video.service';
@@ -26,9 +30,13 @@ import { SqliteSceneRepository } from './infrastructure/persistence/sqlite-scene
     { provide: SUBTITLE_REPOSITORY, useClass: SqliteSubtitleRepository },
     { provide: SCENE_REPOSITORY, useClass: SqliteSceneRepository },
     {
-      // Free/local transcription engine (ADR 0002/0003). Swap the class to change engines.
+      // Transcription engine (ADR 0002/0003). TRANSCRIPTION_ENGINE=mock uses the
+      // dependency-free provider; otherwise free/local Whisper.cpp.
       provide: TRANSCRIPTION_PROVIDER,
-      useFactory: () => new WhisperCppProvider(process.env.WHISPER_MODEL ?? 'tiny'),
+      useFactory: (): TranscriptionProvider =>
+        process.env.TRANSCRIPTION_ENGINE === 'mock'
+          ? new MockTranscriptionProvider()
+          : new WhisperCppProvider(process.env.WHISPER_MODEL ?? 'tiny'),
     },
   ],
 })

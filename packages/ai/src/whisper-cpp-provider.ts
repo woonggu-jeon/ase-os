@@ -74,7 +74,9 @@ function readSegments(dir: string): TranscriptionSegment[] {
 
   const jsonFile = files.find((f) => f.endsWith('.json'));
   if (jsonFile) {
-    const parsed = JSON.parse(readFileSync(path.join(dir, jsonFile), 'utf8')) as WhisperJson;
+    const parsed = JSON.parse(
+      readFileSync(path.join(dir, jsonFile), 'utf8'),
+    ) as WhisperJson;
     return (parsed.transcription ?? []).map((item) => ({
       startSec: (item.offsets?.from ?? 0) / 1000,
       endSec: (item.offsets?.to ?? 0) / 1000,
@@ -103,7 +105,10 @@ function parseSrt(srt: string): TranscriptionSegment[] {
     const m = SRT_TIME.exec(timeLine);
     if (!m) continue;
 
-    const text = lines.slice(lines.indexOf(timeLine) + 1).join(' ').trim();
+    const text = lines
+      .slice(lines.indexOf(timeLine) + 1)
+      .join(' ')
+      .trim();
     if (text) {
       segments.push({
         startSec: toSeconds(m[1], m[2], m[3], m[4]),

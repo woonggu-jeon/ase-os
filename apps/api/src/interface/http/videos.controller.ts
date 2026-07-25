@@ -63,13 +63,13 @@ export class VideosController {
   @Post()
   @HttpCode(201)
   @UseInterceptors(FileInterceptor('video', uploadOptions))
-  upload(@UploadedFile() file?: Express.Multer.File): VideoView {
+  async upload(@UploadedFile() file?: Express.Multer.File): Promise<VideoView> {
     if (!file) {
       throw new BadRequestException(
         `No valid video file. Allowed types: ${ALLOWED_VIDEO_MIME_TYPES.join(', ')}`,
       );
     }
-    const video = this.uploads.register({
+    const video = await this.uploads.register({
       originalName: file.originalname,
       mimeType: file.mimetype,
       sizeBytes: file.size,

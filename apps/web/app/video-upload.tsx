@@ -35,7 +35,10 @@ function formatTime(sec: number): string {
 }
 
 async function readError(res: Response): Promise<string> {
-  const data = (await res.json().catch(() => ({}))) as { message?: string; error?: string };
+  const data = (await res.json().catch(() => ({}))) as {
+    message?: string;
+    error?: string;
+  };
   return data.message ?? data.error ?? `Request failed (${res.status})`;
 }
 
@@ -71,19 +74,22 @@ export function VideoUpload() {
       const video = (await res.json()) as VideoView;
       setUpload({ kind: 'done', video });
     } catch (err: unknown) {
-      setUpload({ kind: 'error', message: err instanceof Error ? err.message : 'Unknown error' });
+      setUpload({
+        kind: 'error',
+        message: err instanceof Error ? err.message : 'Unknown error',
+      });
     }
   }
 
-  async function run<T>(
-    url: string,
-    set: (s: AsyncState<T>) => void,
-  ): Promise<void> {
+  async function run<T>(url: string, set: (s: AsyncState<T>) => void): Promise<void> {
     set({ kind: 'running' });
     try {
       set({ kind: 'done', data: await postJson<T>(url) });
     } catch (err: unknown) {
-      set({ kind: 'error', message: err instanceof Error ? err.message : 'Unknown error' });
+      set({
+        kind: 'error',
+        message: err instanceof Error ? err.message : 'Unknown error',
+      });
     }
   }
 
@@ -106,10 +112,20 @@ export function VideoUpload() {
             ✅ Uploaded <strong>{upload.video.originalName}</strong> (
             {formatBytes(upload.video.sizeBytes)})
           </p>
+          <p style={{ color: '#666' }}>
+            {formatTime(upload.video.metadata.durationSec)} ·{' '}
+            {upload.video.metadata.width && upload.video.metadata.height
+              ? `${upload.video.metadata.width}×${upload.video.metadata.height}`
+              : 'unknown size'}{' '}
+            · {upload.video.metadata.videoCodec ?? 'n/a'} ·{' '}
+            {upload.video.metadata.hasAudio ? 'audio' : 'no audio'}
+          </p>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button
               type="button"
-              onClick={() => void run(`/api/videos/${upload.video.id}/subtitles`, setSubtitles)}
+              onClick={() =>
+                void run(`/api/videos/${upload.video.id}/subtitles`, setSubtitles)
+              }
               disabled={subtitles.kind === 'running'}
             >
               {subtitles.kind === 'running' ? 'Generating…' : 'Generate subtitles'}
@@ -123,7 +139,9 @@ export function VideoUpload() {
             </button>
           </div>
           {subtitles.kind === 'running' && (
-            <p>Transcribing locally with Whisper.cpp… first run builds/downloads the model.</p>
+            <p>
+              Transcribing locally with Whisper.cpp… first run builds/downloads the model.
+            </p>
           )}
           {scenes.kind === 'running' && <p>Detecting scenes locally with FFmpeg…</p>}
         </div>
@@ -162,7 +180,8 @@ export function VideoUpload() {
             {scenes.data.scenes.map((scene) => (
               <li key={scene.index}>
                 <code>
-                  #{scene.index + 1} {formatTime(scene.startSec)}–{formatTime(scene.endSec)}
+                  #{scene.index + 1} {formatTime(scene.startSec)}–
+                  {formatTime(scene.endSec)}
                 </code>
               </li>
             ))}

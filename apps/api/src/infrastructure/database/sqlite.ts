@@ -21,6 +21,11 @@ export function createDatabase(): Db {
       mime_type     TEXT NOT NULL,
       size_bytes    INTEGER NOT NULL,
       stored_path   TEXT NOT NULL,
+      duration_sec  REAL NOT NULL DEFAULT 0,
+      width         INTEGER,
+      height        INTEGER,
+      video_codec   TEXT,
+      has_audio     INTEGER NOT NULL DEFAULT 0,
       uploaded_at   TEXT NOT NULL
     );
 

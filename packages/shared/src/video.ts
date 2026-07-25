@@ -1,3 +1,12 @@
+/** Media metadata extracted at upload time (via ffprobe). */
+export interface VideoMetadata {
+  readonly durationSec: number;
+  readonly width: number | null;
+  readonly height: number | null;
+  readonly videoCodec: string | null;
+  readonly hasAudio: boolean;
+}
+
 export interface Video {
   readonly id: string;
   readonly originalName: string;
@@ -5,6 +14,7 @@ export interface Video {
   readonly sizeBytes: number;
   /** Absolute path on local disk. Internal — never exposed over HTTP. */
   readonly storedPath: string;
+  readonly metadata: VideoMetadata;
   /** ISO-8601 timestamp. */
   readonly uploadedAt: string;
 }
@@ -32,6 +42,7 @@ export interface VideoView {
   readonly originalName: string;
   readonly mimeType: string;
   readonly sizeBytes: number;
+  readonly metadata: VideoMetadata;
   readonly uploadedAt: string;
 }
 
@@ -41,6 +52,7 @@ export function toVideoView(video: Video): VideoView {
     originalName: video.originalName,
     mimeType: video.mimeType,
     sizeBytes: video.sizeBytes,
+    metadata: video.metadata,
     uploadedAt: video.uploadedAt,
   };
 }

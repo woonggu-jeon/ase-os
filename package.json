@@ -5,14 +5,23 @@
   "description": "ASE-OS validation product — local AI video editing MVP (Phase 1)",
   "packageManager": "pnpm@11.17.0",
   "scripts": {
-    "build:packages": "pnpm -r --filter \"./packages/*\" build",
-    "dev": "pnpm build:packages && pnpm --parallel -r dev",
-    "dev:web": "pnpm --filter @ase-os/web dev",
-    "dev:api": "pnpm build:packages && pnpm --filter @ase-os/api dev",
-    "build": "pnpm -r build",
-    "typecheck": "pnpm build:packages && pnpm -r typecheck"
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "dev": "turbo run dev",
+    "dev:web": "turbo run dev --filter=@ase-os/web",
+    "dev:api": "turbo run dev --filter=@ase-os/api",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.18.0",
+    "eslint": "^9.18.0",
+    "prettier": "^3.4.2",
+    "turbo": "^2.3.3",
+    "typescript-eslint": "^8.20.0"
   }
 }
