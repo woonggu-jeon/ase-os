@@ -6,6 +6,10 @@ dist/
 build/
 *.tsbuildinfo
 
+# Next.js
+.next/
+out/
+
 # Environment
 .env
 .env.local
@@ -21,3 +25,6 @@ npm-debug.log*
 
 # Runtime uploads / generated media (Phase 1 local storage)
 uploads/
+
+# SQLite database (local persistence)
+data/

@@ -1,5 +1,7 @@
-// Application-owned AI contract (see ADR 0001 / ADR 0002).
-// Feature code depends on this interface, never on a concrete AI engine or SDK.
+// Application-owned AI contract (see ADR 0001 / 0002 / 0003).
+// Feature code depends on this interface, never on a concrete engine.
+
+export const TRANSCRIPTION_PROVIDER = Symbol('TranscriptionProvider');
 
 export interface TranscriptionSegment {
   readonly startSec: number;
@@ -14,9 +16,6 @@ export interface TranscriptionResult {
 }
 
 export interface TranscriptionProvider {
-  /**
-   * Transcribe the media file at the given path into timed text segments.
-   * Implementations may be local (free) or hosted; callers do not care which.
-   */
+  /** Transcribe a media file into timed text segments (implementation-agnostic). */
   transcribe(mediaPath: string): Promise<TranscriptionResult>;
 }

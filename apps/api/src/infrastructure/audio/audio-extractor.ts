@@ -1,20 +1,20 @@
 import { spawn } from 'node:child_process';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 
-/** Sample rate Whisper models expect. */
+/** Whisper models expect 16 kHz mono audio. */
 export const WHISPER_SAMPLE_RATE = 16_000;
 
-export interface ExtractedAudio {
-  readonly samples: Float32Array;
-  readonly sampleRate: number;
-  readonly durationSec: number;
-}
-
 /**
- * Decode any ffmpeg-readable media file into mono 16 kHz float32 PCM samples.
- * Uses the local `ffmpeg` binary (no network, no cost).
+ * Convert any ffmpeg-readable media file into a 16 kHz mono 16-bit WAV file and
+ * return its path. Uses the local `ffmpeg` binary (no network, no cost).
  */
-export function extractPcm16kMono(mediaPath: string): Promise<ExtractedAudio> {
+export function extractWav16k(mediaPath: string): Promise<string> {
   return new Promise((resolve, reject) => {
+    const outDir = mkdtempSync(path.join(tmpdir(), 'ase-os-audio-'));
+    const outPath = path.join(outDir, 'audio.wav');
+
     const ffmpeg = spawn('ffmpeg', [
       '-i',
       mediaPath,
@@ -22,19 +22,17 @@ export function extractPcm16kMono(mediaPath: string): Promise<ExtractedAudio> {
       String(WHISPER_SAMPLE_RATE),
       '-ac',
       '1',
+      '-c:a',
+      'pcm_s16le',
       '-f',
-      'f32le',
-      '-acodec',
-      'pcm_f32le',
+      'wav',
       '-loglevel',
       'error',
-      'pipe:1',
+      '-y',
+      outPath,
     ]);
 
-    const chunks: Buffer[] = [];
     let stderr = '';
-
-    ffmpeg.stdout.on('data', (chunk: Buffer) => chunks.push(chunk));
     ffmpeg.stderr.on('data', (chunk: Buffer) => {
       stderr += chunk.toString();
     });
@@ -44,18 +42,7 @@ export function extractPcm16kMono(mediaPath: string): Promise<ExtractedAudio> {
         reject(new Error(`ffmpeg exited with code ${code}: ${stderr.trim()}`));
         return;
       }
-      const buffer = Buffer.concat(chunks);
-      const sampleCount = Math.floor(buffer.byteLength / Float32Array.BYTES_PER_ELEMENT);
-      // Copy into a standalone, correctly-aligned Float32Array.
-      const samples = new Float32Array(sampleCount);
-      for (let i = 0; i < sampleCount; i += 1) {
-        samples[i] = buffer.readFloatLE(i * Float32Array.BYTES_PER_ELEMENT);
-      }
-      resolve({
-        samples,
-        sampleRate: WHISPER_SAMPLE_RATE,
-        durationSec: sampleCount / WHISPER_SAMPLE_RATE,
-      });
+      resolve(outPath);
     });
   });
 }

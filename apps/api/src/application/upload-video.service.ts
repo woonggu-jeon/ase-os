@@ -1,8 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import type { Video } from '../domain/video.js';
-import type { VideoRepository } from '../infrastructure/video-repository.js';
+import { Inject, Injectable } from '@nestjs/common';
+import type { Video } from '../domain/video';
+import { VIDEO_REPOSITORY, type VideoRepository } from './video-repository';
 
-/** A file already persisted to disk by the delivery layer (e.g. multer). */
+/** A file already persisted to disk by the delivery layer (multer). */
 export interface StoredFile {
   readonly originalName: string;
   readonly mimeType: string;
@@ -10,13 +11,11 @@ export interface StoredFile {
   readonly storedPath: string;
 }
 
-/** Application use case: register an uploaded video and expose read queries. */
+@Injectable()
 export class UploadVideoService {
-  readonly #repository: VideoRepository;
-
-  constructor(repository: VideoRepository) {
-    this.#repository = repository;
-  }
+  constructor(
+    @Inject(VIDEO_REPOSITORY) private readonly repository: VideoRepository,
+  ) {}
 
   register(file: StoredFile): Video {
     const video: Video = {
@@ -27,15 +26,15 @@ export class UploadVideoService {
       storedPath: file.storedPath,
       uploadedAt: new Date().toISOString(),
     };
-    this.#repository.save(video);
+    this.repository.save(video);
     return video;
   }
 
   list(): readonly Video[] {
-    return this.#repository.list();
+    return this.repository.list();
   }
 
   findById(id: string): Video | undefined {
-    return this.#repository.findById(id);
+    return this.repository.findById(id);
   }
 }

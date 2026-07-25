@@ -12,3 +12,4 @@ required by CORE_VALUES ("Explain Every Decision") and CONSTITUTION.
 | --- | --- | --- |
 | [0001](./0001-architecture-layering.md) | Architecture Layering and AIProvider Placement | Accepted |
 | [0002](./0002-free-local-transcription.md) | Free, Local Transcription (deviation from Rule 6) | Accepted |
+| [0003](./0003-technology-stack.md) | Technology Stack (Next.js / NestJS / SQLite / Whisper.cpp) | Accepted |

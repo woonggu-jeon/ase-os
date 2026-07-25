@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, type ChangeEvent } from 'react';
 
 interface UploadedVideo {
@@ -54,11 +56,11 @@ function formatTime(sec: number): string {
 }
 
 async function readError(res: Response): Promise<string> {
-  const data = (await res.json().catch(() => ({}))) as { error?: string };
-  return data.error ?? `Request failed (${res.status})`;
+  const data = (await res.json().catch(() => ({}))) as { message?: string; error?: string };
+  return data.message ?? data.error ?? `Request failed (${res.status})`;
 }
 
-export function VideoUpload(): JSX.Element {
+export function VideoUpload() {
   const [file, setFile] = useState<File | null>(null);
   const [upload, setUpload] = useState<UploadState>({ kind: 'idle' });
   const [subtitles, setSubtitles] = useState<SubtitleState>({ kind: 'idle' });
@@ -93,7 +95,10 @@ export function VideoUpload(): JSX.Element {
       const track = (await res.json()) as SubtitleTrack;
       setSubtitles({ kind: 'done', track });
     } catch (err: unknown) {
-      setSubtitles({ kind: 'error', message: err instanceof Error ? err.message : 'Unknown error' });
+      setSubtitles({
+        kind: 'error',
+        message: err instanceof Error ? err.message : 'Unknown error',
+      });
     }
   }
 
@@ -124,7 +129,7 @@ export function VideoUpload(): JSX.Element {
             {subtitles.kind === 'generating' ? 'Generating…' : 'Generate subtitles'}
           </button>
           {subtitles.kind === 'generating' && (
-            <p>Transcribing locally… the first run downloads the model.</p>
+            <p>Transcribing locally with Whisper.cpp… first run builds/downloads the model.</p>
           )}
         </div>
       )}

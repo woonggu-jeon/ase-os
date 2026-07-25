@@ -1,10 +1,7 @@
 packages:
   - 'apps/*'
 
-# Allow these packages to run install scripts that fetch their native binaries.
-# esbuild: used by Vite. onnxruntime-node/sharp: used by Transformers.js (local Whisper).
+# Allow these packages to run install scripts that fetch/build native binaries.
+# better-sqlite3: SQLite persistence. Others pulled in transitively as needed.
 onlyBuiltDependencies:
-  - esbuild
-  - onnxruntime-node
-  - protobufjs
-  - sharp
+  - better-sqlite3

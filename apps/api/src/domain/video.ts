@@ -1,4 +1,4 @@
-// Domain layer: types and rules only. No I/O, no framework imports.
+// Domain layer: types and rules only. No framework, no I/O.
 
 export interface Video {
   readonly id: string;

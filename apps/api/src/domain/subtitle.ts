@@ -1,4 +1,4 @@
-// Domain layer: subtitle types and rules only. No I/O, no framework imports.
+// Domain layer: subtitle types and rules only.
 
 export interface SubtitleSegment {
   readonly startSec: number;

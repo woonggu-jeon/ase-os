@@ -10,57 +10,70 @@ A **local AI video editing MVP**:
 Video Upload → AI Processing → Timeline Generation → Preview
 ```
 
-Phase 1 scope is defined in [`CURRENT_PHASE.md`](./CURRENT_PHASE.md). Anything outside it (auth, payment, cloud, multi-user, plugins, …) is intentionally **not** built.
+Phase 1 scope is in [`CURRENT_PHASE.md`](./CURRENT_PHASE.md). Anything outside it (auth,
+payment, cloud, multi-user, plugins, …) is intentionally **not** built.
+
+## Tech stack (ADR 0003)
+
+Everything runs locally and **free** (ADR 0002 — no paid APIs):
+
+| Concern | Choice |
+| --- | --- |
+| Frontend | Next.js (App Router) — proxies `/api/*` to the backend |
+| Backend | NestJS |
+| Media | FFmpeg |
+| Persistence | SQLite (`better-sqlite3`) |
+| Transcription | Whisper.cpp (`nodejs-whisper`) |
+| Local LLM | Ollama — *deferred until a feature needs it* |
+
+Architecture layering (domain / application / infrastructure / interface) is described in
+[ADR 0001](./docs/adr/0001-architecture-layering.md) and expressed through NestJS modules.
 
 ## Repository layout
 
 ```
 ase-os/
 ├─ apps/
-│  ├─ api/   # Node + Express + TypeScript API server
-│  └─ web/   # React + Vite + TypeScript frontend
-├─ docs/     # Constitution + Knowledge (Single Source of Truth)
-└─ *.md      # Project operating documents (status, phase, roadmap, rules)
+│  ├─ api/   # NestJS backend (:3001)
+│  └─ web/   # Next.js frontend (:3000)
+├─ docs/     # Constitution + Knowledge + ADRs (Single Source of Truth)
+└─ *.md      # Project operating documents
 ```
 
-This is a **pnpm workspaces** monorepo.
+pnpm workspaces monorepo.
 
 ## Requirements
 
 - Node.js >= 20 (developed on v23)
-- pnpm (enable via `corepack enable`)
-- `ffmpeg` (for video processing) — install with `brew install ffmpeg`
+- pnpm (`corepack enable`)
+- `ffmpeg` (`brew install ffmpeg`)
+- `cmake` + a C/C++ toolchain (`brew install cmake`; Xcode CLT) — Whisper.cpp builds on first run
 
 ## Getting started
 
 ```bash
-# 0. Enable pnpm (once)
-corepack enable
-
-# 1. Install dependencies for all workspaces
+corepack enable          # once
 pnpm install
 
-# 2. Configure environment
-cp .env.example .env   # then fill in OPENAI_API_KEY when AI features land
+cp .env.example .env      # optional; defaults work out of the box
 
-# 3. Run both apps (api on :3001, web on :5173)
-pnpm dev
+pnpm dev                  # api on :3001, web on :3000
 ```
 
-Then open http://localhost:5173 — the page fetches `/api/health` (proxied to the API) and should display the API status, confirming the end-to-end dev environment works.
+Open http://localhost:3000, upload a video, then "Generate subtitles". The first
+transcription builds Whisper.cpp and downloads the model (one-time), then runs offline.
 
-### Useful scripts
+### Scripts
 
 | Command | Description |
 | --- | --- |
-| `pnpm dev` | Run api and web together |
-| `pnpm dev:api` | Run only the API server |
-| `pnpm dev:web` | Run only the web frontend |
+| `pnpm dev` | Run api + web together |
+| `pnpm dev:api` / `pnpm dev:web` | Run one app |
 | `pnpm build` | Build all workspaces |
 | `pnpm typecheck` | Type-check all workspaces (strict, no `any`) |
 
 ## Conventions
 
-- **Strict TypeScript**, no `any`, small functions, single responsibility.
-- AI access goes through an `AIProvider` interface (OpenAI first, replaceable) — added when AI features are implemented.
+- Strict TypeScript, no `any`, small functions, single responsibility.
+- AI access goes through interfaces (e.g. `TranscriptionProvider`); engines are swappable.
 - Build only the current phase. Documentation defines "today".
