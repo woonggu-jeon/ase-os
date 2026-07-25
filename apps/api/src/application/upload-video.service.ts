@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
-import type { Video } from '../domain/video';
+import type { Video } from '@ase-os/shared';
 import { VIDEO_REPOSITORY, type VideoRepository } from './video-repository';
 
 /** A file already persisted to disk by the delivery layer (multer). */

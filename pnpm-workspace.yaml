@@ -1,5 +1,6 @@
 packages:
   - 'apps/*'
+  - 'packages/*'
 
 # Allow these packages to run install scripts that fetch/build native binaries.
 # better-sqlite3: SQLite persistence. Others pulled in transitively as needed.

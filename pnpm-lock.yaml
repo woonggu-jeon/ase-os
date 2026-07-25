@@ -10,6 +10,15 @@ importers:
 
   apps/api:
     dependencies:
+      '@ase-os/ai':
+        specifier: workspace:*
+        version: link:../../packages/ai
+      '@ase-os/ffmpeg':
+        specifier: workspace:*
+        version: link:../../packages/ffmpeg
+      '@ase-os/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@nestjs/common':
         specifier: ^11.0.1
         version: 11.1.28(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
@@ -25,9 +34,6 @@ importers:
       multer:
         specifier: ^2.0.1
         version: 2.2.0
-      nodejs-whisper:
-        specifier: ^0.2.9
-        version: 0.2.9
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -59,6 +65,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@ase-os/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       next:
         specifier: ^15.1.4
         version: 15.5.21(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -78,6 +87,39 @@ importers:
       '@types/react-dom':
         specifier: ^19.0.3
         version: 19.2.3(@types/react@19.2.17)
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+
+  packages/ai:
+    dependencies:
+      '@ase-os/ffmpeg':
+        specifier: workspace:*
+        version: link:../ffmpeg
+      nodejs-whisper:
+        specifier: ^0.2.9
+        version: 0.2.9
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.5
+        version: 22.20.1
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+
+  packages/config: {}
+
+  packages/ffmpeg:
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.5
+        version: 22.20.1
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+
+  packages/shared:
+    devDependencies:
       typescript:
         specifier: ^5.7.3
         version: 5.9.3

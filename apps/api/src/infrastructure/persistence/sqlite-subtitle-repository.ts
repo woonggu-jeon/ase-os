@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { SubtitleSegment, SubtitleTrack } from '../../domain/subtitle';
+import type { SubtitleSegment, SubtitleTrack } from '@ase-os/shared';
 import type { SubtitleRepository } from '../../application/subtitle-repository';
 import { DATABASE, type Db } from '../database/sqlite';
 

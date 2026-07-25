@@ -1,39 +1,18 @@
 'use client';
 
 import { useState, type ChangeEvent } from 'react';
-
-interface UploadedVideo {
-  id: string;
-  originalName: string;
-  mimeType: string;
-  sizeBytes: number;
-  uploadedAt: string;
-}
-
-interface SubtitleSegment {
-  startSec: number;
-  endSec: number;
-  text: string;
-}
-
-interface SubtitleTrack {
-  videoId: string;
-  language: string | null;
-  engine: string;
-  segments: SubtitleSegment[];
-  generatedAt: string;
-}
+import type { SceneList, SubtitleTrack, VideoView } from '@ase-os/shared';
 
 type UploadState =
   | { kind: 'idle' }
   | { kind: 'uploading' }
-  | { kind: 'done'; video: UploadedVideo }
+  | { kind: 'done'; video: VideoView }
   | { kind: 'error'; message: string };
 
-type SubtitleState =
+type AsyncState<T> =
   | { kind: 'idle' }
-  | { kind: 'generating' }
-  | { kind: 'done'; track: SubtitleTrack }
+  | { kind: 'running' }
+  | { kind: 'done'; data: T }
   | { kind: 'error'; message: string };
 
 function formatBytes(bytes: number): string {
@@ -60,45 +39,51 @@ async function readError(res: Response): Promise<string> {
   return data.message ?? data.error ?? `Request failed (${res.status})`;
 }
 
+async function postJson<T>(url: string): Promise<T> {
+  const res = await fetch(url, { method: 'POST' });
+  if (!res.ok) throw new Error(await readError(res));
+  return (await res.json()) as T;
+}
+
 export function VideoUpload() {
   const [file, setFile] = useState<File | null>(null);
   const [upload, setUpload] = useState<UploadState>({ kind: 'idle' });
-  const [subtitles, setSubtitles] = useState<SubtitleState>({ kind: 'idle' });
+  const [subtitles, setSubtitles] = useState<AsyncState<SubtitleTrack>>({ kind: 'idle' });
+  const [scenes, setScenes] = useState<AsyncState<SceneList>>({ kind: 'idle' });
 
   function handleSelect(event: ChangeEvent<HTMLInputElement>): void {
     setFile(event.target.files?.[0] ?? null);
     setUpload({ kind: 'idle' });
     setSubtitles({ kind: 'idle' });
+    setScenes({ kind: 'idle' });
   }
 
   async function handleUpload(): Promise<void> {
     if (!file) return;
     setUpload({ kind: 'uploading' });
     setSubtitles({ kind: 'idle' });
+    setScenes({ kind: 'idle' });
     try {
       const body = new FormData();
       body.append('video', file);
       const res = await fetch('/api/videos', { method: 'POST', body });
       if (!res.ok) throw new Error(await readError(res));
-      const video = (await res.json()) as UploadedVideo;
+      const video = (await res.json()) as VideoView;
       setUpload({ kind: 'done', video });
     } catch (err: unknown) {
       setUpload({ kind: 'error', message: err instanceof Error ? err.message : 'Unknown error' });
     }
   }
 
-  async function handleGenerate(videoId: string): Promise<void> {
-    setSubtitles({ kind: 'generating' });
+  async function run<T>(
+    url: string,
+    set: (s: AsyncState<T>) => void,
+  ): Promise<void> {
+    set({ kind: 'running' });
     try {
-      const res = await fetch(`/api/videos/${videoId}/subtitles`, { method: 'POST' });
-      if (!res.ok) throw new Error(await readError(res));
-      const track = (await res.json()) as SubtitleTrack;
-      setSubtitles({ kind: 'done', track });
+      set({ kind: 'done', data: await postJson<T>(url) });
     } catch (err: unknown) {
-      setSubtitles({
-        kind: 'error',
-        message: err instanceof Error ? err.message : 'Unknown error',
-      });
+      set({ kind: 'error', message: err instanceof Error ? err.message : 'Unknown error' });
     }
   }
 
@@ -121,16 +106,26 @@ export function VideoUpload() {
             ✅ Uploaded <strong>{upload.video.originalName}</strong> (
             {formatBytes(upload.video.sizeBytes)})
           </p>
-          <button
-            type="button"
-            onClick={() => void handleGenerate(upload.video.id)}
-            disabled={subtitles.kind === 'generating'}
-          >
-            {subtitles.kind === 'generating' ? 'Generating…' : 'Generate subtitles'}
-          </button>
-          {subtitles.kind === 'generating' && (
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button
+              type="button"
+              onClick={() => void run(`/api/videos/${upload.video.id}/subtitles`, setSubtitles)}
+              disabled={subtitles.kind === 'running'}
+            >
+              {subtitles.kind === 'running' ? 'Generating…' : 'Generate subtitles'}
+            </button>
+            <button
+              type="button"
+              onClick={() => void run(`/api/videos/${upload.video.id}/scenes`, setScenes)}
+              disabled={scenes.kind === 'running'}
+            >
+              {scenes.kind === 'running' ? 'Detecting…' : 'Detect scenes'}
+            </button>
+          </div>
+          {subtitles.kind === 'running' && (
             <p>Transcribing locally with Whisper.cpp… first run builds/downloads the model.</p>
           )}
+          {scenes.kind === 'running' && <p>Detecting scenes locally with FFmpeg…</p>}
         </div>
       )}
       {upload.kind === 'error' && <p>❌ {upload.message}</p>}
@@ -138,12 +133,12 @@ export function VideoUpload() {
       {subtitles.kind === 'done' && (
         <div style={{ marginTop: '1rem' }}>
           <h3>Subtitles</h3>
-          <p style={{ color: '#666' }}>engine: {subtitles.track.engine}</p>
-          {subtitles.track.segments.length === 0 ? (
+          <p style={{ color: '#666' }}>engine: {subtitles.data.engine}</p>
+          {subtitles.data.segments.length === 0 ? (
             <p>No speech detected.</p>
           ) : (
             <ul>
-              {subtitles.track.segments.map((seg, i) => (
+              {subtitles.data.segments.map((seg, i) => (
                 <li key={i}>
                   <code>
                     {formatTime(seg.startSec)}–{formatTime(seg.endSec)}
@@ -156,6 +151,25 @@ export function VideoUpload() {
         </div>
       )}
       {subtitles.kind === 'error' && <p>❌ {subtitles.message}</p>}
+
+      {scenes.kind === 'done' && (
+        <div style={{ marginTop: '1rem' }}>
+          <h3>Scenes</h3>
+          <p style={{ color: '#666' }}>
+            engine: {scenes.data.engine} · {scenes.data.scenes.length} scene(s)
+          </p>
+          <ul>
+            {scenes.data.scenes.map((scene) => (
+              <li key={scene.index}>
+                <code>
+                  #{scene.index + 1} {formatTime(scene.startSec)}–{formatTime(scene.endSec)}
+                </code>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {scenes.kind === 'error' && <p>❌ {scenes.message}</p>}
     </section>
   );
 }

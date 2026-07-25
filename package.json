@@ -5,11 +5,12 @@
   "description": "ASE-OS validation product — local AI video editing MVP (Phase 1)",
   "packageManager": "pnpm@11.17.0",
   "scripts": {
-    "dev": "pnpm --parallel -r dev",
+    "build:packages": "pnpm -r --filter \"./packages/*\" build",
+    "dev": "pnpm build:packages && pnpm --parallel -r dev",
     "dev:web": "pnpm --filter @ase-os/web dev",
-    "dev:api": "pnpm --filter @ase-os/api dev",
+    "dev:api": "pnpm build:packages && pnpm --filter @ase-os/api dev",
     "build": "pnpm -r build",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm build:packages && pnpm -r typecheck"
   },
   "engines": {
     "node": ">=20"

@@ -1,11 +1,9 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import type { SubtitleTrack } from '../domain/subtitle';
+import type { SubtitleTrack } from '@ase-os/shared';
+import type { TranscriptionProvider } from '@ase-os/ai';
 import { VIDEO_REPOSITORY, type VideoRepository } from './video-repository';
 import { SUBTITLE_REPOSITORY, type SubtitleRepository } from './subtitle-repository';
-import {
-  TRANSCRIPTION_PROVIDER,
-  type TranscriptionProvider,
-} from './transcription-provider';
+import { TRANSCRIPTION_PROVIDER } from './transcription';
 
 @Injectable()
 export class GenerateSubtitlesService {

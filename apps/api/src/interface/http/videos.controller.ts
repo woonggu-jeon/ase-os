@@ -19,11 +19,13 @@ import {
   MAX_VIDEO_SIZE_BYTES,
   isAllowedVideoMimeType,
   toVideoView,
+  type SceneList,
+  type SubtitleTrack,
   type VideoView,
-} from '../../domain/video';
-import type { SubtitleTrack } from '../../domain/subtitle';
+} from '@ase-os/shared';
 import { UploadVideoService } from '../../application/upload-video.service';
 import { GenerateSubtitlesService } from '../../application/generate-subtitles.service';
+import { DetectScenesService } from '../../application/detect-scenes.service';
 
 const UPLOAD_DIR = path.resolve(process.cwd(), 'uploads');
 
@@ -46,7 +48,6 @@ const uploadOptions = {
     file: Express.Multer.File,
     cb: (error: Error | null, acceptFile: boolean) => void,
   ): void => {
-    // Reject non-video files; the handler reports 400 when no file survives.
     cb(null, isAllowedVideoMimeType(file.mimetype));
   },
 };
@@ -56,6 +57,7 @@ export class VideosController {
   constructor(
     private readonly uploads: UploadVideoService,
     private readonly subtitles: GenerateSubtitlesService,
+    private readonly scenes: DetectScenesService,
   ) {}
 
   @Post()
@@ -99,5 +101,16 @@ export class VideosController {
   @Get(':id/subtitles')
   getSubtitles(@Param('id') id: string): SubtitleTrack {
     return this.subtitles.get(id);
+  }
+
+  @Post(':id/scenes')
+  @HttpCode(201)
+  detectScenes(@Param('id') id: string): Promise<SceneList> {
+    return this.scenes.detect(id);
+  }
+
+  @Get(':id/scenes')
+  getScenes(@Param('id') id: string): SceneList {
+    return this.scenes.get(id);
   }
 }

@@ -1,4 +1,4 @@
-import type { SubtitleTrack } from '../domain/subtitle';
+import type { SubtitleTrack } from '@ase-os/shared';
 
 export const SUBTITLE_REPOSITORY = Symbol('SubtitleRepository');
 

@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { Video } from '../../domain/video';
+import type { Video } from '@ase-os/shared';
 import type { VideoRepository } from '../../application/video-repository';
 import { DATABASE, type Db } from '../database/sqlite';
 

@@ -1,7 +1,5 @@
-// Application-owned AI contract (see ADR 0001 / 0002 / 0003).
-// Feature code depends on this interface, never on a concrete engine.
-
-export const TRANSCRIPTION_PROVIDER = Symbol('TranscriptionProvider');
+// Framework-agnostic AI contract (see ADR 0001 / 0002 / 0004).
+// Consumers depend on this interface, never on a concrete engine.
 
 export interface TranscriptionSegment {
   readonly startSec: number;

@@ -1,5 +1,3 @@
-// Domain layer: subtitle types and rules only.
-
 export interface SubtitleSegment {
   readonly startSec: number;
   readonly endSec: number;

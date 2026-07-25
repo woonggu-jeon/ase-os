@@ -32,6 +32,14 @@ export function createDatabase(): Db {
       generated_at  TEXT NOT NULL,
       FOREIGN KEY (video_id) REFERENCES videos(id)
     );
+
+    CREATE TABLE IF NOT EXISTS scene_lists (
+      video_id    TEXT PRIMARY KEY,
+      engine      TEXT NOT NULL,
+      scenes_json TEXT NOT NULL,
+      detected_at TEXT NOT NULL,
+      FOREIGN KEY (video_id) REFERENCES videos(id)
+    );
   `);
 
   return db;
