@@ -60,8 +60,20 @@ cp .env.example .env      # optional; defaults work out of the box
 pnpm dev                  # api on :3001, web on :3000
 ```
 
-Open http://localhost:3000, upload a video, then "Generate subtitles". The first
-transcription builds Whisper.cpp and downloads the model (one-time), then runs offline.
+Open http://localhost:3000, then:
+
+1. Choose a video file (mp4/mov/webm/mkv/avi, ≤ 500 MB) and click **Upload** — metadata
+   (duration, resolution, codec, audio) is shown.
+2. Click **Detect scenes** and/or **Generate subtitles**.
+3. In **Preview**, play the video: subtitles are overlaid in sync and the scene strip is
+   clickable (click a scene to seek). **Build timeline** / **Refresh timeline** shows the
+   composed Timeline JSON.
+
+The first subtitle run builds Whisper.cpp and downloads the model (one-time), then runs
+offline. For a fast run with no model download, use the mock engine:
+`TRANSCRIPTION_ENGINE=mock pnpm dev:api`.
+
+You can also upload from the CLI: `scripts/upload-sample.sh <path-to-video>`.
 
 ### Scripts
 
@@ -71,6 +83,8 @@ transcription builds Whisper.cpp and downloads the model (one-time), then runs o
 | `pnpm dev:api` / `pnpm dev:web` | Run one app |
 | `pnpm build` | Build all workspaces |
 | `pnpm typecheck` | Type-check all workspaces (strict, no `any`) |
+| `pnpm lint` / `pnpm format` | Lint / format |
+| `pnpm test` | Run the workflow integration test (requires `ffmpeg`) |
 
 ## Conventions
 

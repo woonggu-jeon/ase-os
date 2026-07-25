@@ -10,17 +10,17 @@ Phase 1
 
 Current Sprint
 
-Sprint 002
+Sprint 005
 
 Overall Progress
 
-██░░░░░░░░ 15%
+████░░░░░░ 40%
 
 ---
 
 ## Current Goal
 
-로컬 환경에서 AI 영상 편집 MVP 구축
+로컬 환경에서 AI 영상 편집 MVP 구축 — Phase 1 파이프라인 완료
 
 ---
 
@@ -30,27 +30,31 @@ Overall Progress
 
 ✅ Knowledge Layer (Foundation)
 
+✅ Core Architecture (Next.js / NestJS / SQLite / packages)
+
+✅ Project Bootstrap (Turbo, ESLint, Prettier)
+
+✅ Video Upload (+ metadata 추출)
+
+✅ Subtitle Generation (Whisper.cpp / Mock, 무료·로컬)
+
+✅ Scene Detection (FFmpeg)
+
+✅ Timeline JSON
+
+✅ Preview (재생 + 자막 오버레이 + 씬 스트립)
+
 ---
 
 ## In Progress
 
-🟨 Core Architecture
-
-🟨 Project Bootstrap
+🟨 Phase 1 마무리 (통합 테스트, 문서 정리)
 
 ---
 
 ## Next
 
-⬜ Video Upload
-
-⬜ Subtitle Generation
-
-⬜ Scene Detection
-
-⬜ Timeline JSON
-
-⬜ Preview
+⬜ Phase 1 회고 및 Phase 2 착수 검토 (승인 필요)
 
 ---
 
