@@ -8,12 +8,13 @@ import {
   NotFoundException,
   Param,
   Post,
+  Res,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import {
   ALLOWED_VIDEO_MIME_TYPES,
   MAX_VIDEO_SIZE_BYTES,
@@ -121,5 +122,17 @@ export class VideosController {
   @Get(':id/timeline')
   getTimeline(@Param('id') id: string): Timeline {
     return this.timeline.build(id);
+  }
+
+  // Serve the stored video file for playback. res.sendFile handles Range requests
+  // (seeking) and Content-Type automatically.
+  @Get(':id/file')
+  streamFile(@Param('id') id: string, @Res() res: Response): void {
+    const video = this.uploads.findById(id);
+    if (!video) {
+      res.status(404).json({ message: 'Video not found' });
+      return;
+    }
+    res.sendFile(video.storedPath);
   }
 }

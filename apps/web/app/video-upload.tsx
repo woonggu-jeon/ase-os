@@ -2,6 +2,7 @@
 
 import { useState, type ChangeEvent } from 'react';
 import type { SceneList, SubtitleTrack, Timeline, VideoView } from '@ase-os/shared';
+import { VideoPreview } from './video-preview';
 
 type UploadState =
   | { kind: 'idle' }
@@ -159,6 +160,7 @@ export function VideoUpload() {
             </p>
           )}
           {scenes.kind === 'running' && <p>Detecting scenes locally with FFmpeg…</p>}
+          <VideoPreview videoId={upload.video.id} />
         </div>
       )}
       {upload.kind === 'error' && <p>❌ {upload.message}</p>}
