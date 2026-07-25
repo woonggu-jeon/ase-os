@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { VideoUpload } from './VideoUpload';
 
 interface HealthResponse {
   status: string;
@@ -43,6 +44,7 @@ export function App(): JSX.Element {
         )}
         {api.kind === 'error' && <p>❌ {api.message}</p>}
       </section>
+      <VideoUpload />
     </main>
   );
 }
