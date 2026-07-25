@@ -18,7 +18,7 @@ import type {
 export class WhisperCppProvider implements TranscriptionProvider {
   readonly #model: string;
 
-  constructor(model = 'tiny') {
+  constructor(model = 'base') {
     this.#model = model;
   }
 

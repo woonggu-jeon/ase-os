@@ -17,7 +17,8 @@ export class DetectScenesService {
       throw new NotFoundException('Video not found');
     }
 
-    const detected = await detectScenes(video.storedPath, DEFAULT_SCENE_THRESHOLD);
+    const threshold = Number(process.env.SCENE_THRESHOLD) || DEFAULT_SCENE_THRESHOLD;
+    const detected = await detectScenes(video.storedPath, threshold);
     const scenes: Scene[] = detected.map((s) => ({
       index: s.index,
       startSec: s.startSec,
@@ -26,7 +27,7 @@ export class DetectScenesService {
 
     const list: SceneList = {
       videoId,
-      engine: `ffmpeg-scene:${DEFAULT_SCENE_THRESHOLD}`,
+      engine: `ffmpeg-scene:${threshold}`,
       scenes,
       detectedAt: new Date().toISOString(),
     };
