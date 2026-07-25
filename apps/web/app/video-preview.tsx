@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { Timeline } from '@ase-os/shared';
+import { apiUrl } from './api-base';
 
 function formatTime(sec: number): string {
   const total = Math.max(0, Math.floor(sec));
@@ -22,7 +23,7 @@ export function VideoPreview({ videoId }: { videoId: string }) {
 
   async function loadTimeline(): Promise<void> {
     try {
-      const res = await fetch(`/api/videos/${videoId}/timeline`);
+      const res = await fetch(apiUrl(`/api/videos/${videoId}/timeline`));
       if (!res.ok) throw new Error(`Timeline request failed (${res.status})`);
       setTimeline((await res.json()) as Timeline);
       setError(null);
@@ -54,7 +55,7 @@ export function VideoPreview({ videoId }: { videoId: string }) {
       <div style={{ position: 'relative', maxWidth: 640 }}>
         <video
           ref={videoRef}
-          src={`/api/videos/${videoId}/file`}
+          src={apiUrl(`/api/videos/${videoId}/file`)}
           controls
           style={{ width: '100%', background: '#000', display: 'block' }}
           onTimeUpdate={(e) => setCurrent(e.currentTarget.currentTime)}

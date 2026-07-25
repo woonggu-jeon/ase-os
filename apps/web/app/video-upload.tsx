@@ -3,6 +3,7 @@
 import { useState, type ChangeEvent } from 'react';
 import type { SceneList, SubtitleTrack, Timeline, VideoView } from '@ase-os/shared';
 import { VideoPreview } from './video-preview';
+import { apiUrl } from './api-base';
 
 type UploadState =
   | { kind: 'idle' }
@@ -43,8 +44,8 @@ async function readError(res: Response): Promise<string> {
   return data.message ?? data.error ?? `Request failed (${res.status})`;
 }
 
-async function requestJson<T>(url: string, method: 'GET' | 'POST'): Promise<T> {
-  const res = await fetch(url, { method });
+async function requestJson<T>(path: string, method: 'GET' | 'POST'): Promise<T> {
+  const res = await fetch(apiUrl(path), { method });
   if (!res.ok) throw new Error(await readError(res));
   return (await res.json()) as T;
 }
@@ -72,7 +73,7 @@ export function VideoUpload() {
     try {
       const body = new FormData();
       body.append('video', file);
-      const res = await fetch('/api/videos', { method: 'POST', body });
+      const res = await fetch(apiUrl('/api/videos'), { method: 'POST', body });
       if (!res.ok) throw new Error(await readError(res));
       const video = (await res.json()) as VideoView;
       setUpload({ kind: 'done', video });
