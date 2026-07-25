@@ -1,6 +1,10 @@
 packages:
   - 'apps/*'
 
-# Allow esbuild (used by Vite) to run its install script to fetch its native binary.
+# Allow these packages to run install scripts that fetch their native binaries.
+# esbuild: used by Vite. onnxruntime-node/sharp: used by Transformers.js (local Whisper).
 onlyBuiltDependencies:
   - esbuild
+  - onnxruntime-node
+  - protobufjs
+  - sharp

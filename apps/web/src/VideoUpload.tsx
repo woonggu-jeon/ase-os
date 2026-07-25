@@ -8,10 +8,30 @@ interface UploadedVideo {
   uploadedAt: string;
 }
 
+interface SubtitleSegment {
+  startSec: number;
+  endSec: number;
+  text: string;
+}
+
+interface SubtitleTrack {
+  videoId: string;
+  language: string | null;
+  engine: string;
+  segments: SubtitleSegment[];
+  generatedAt: string;
+}
+
 type UploadState =
   | { kind: 'idle' }
   | { kind: 'uploading' }
   | { kind: 'done'; video: UploadedVideo }
+  | { kind: 'error'; message: string };
+
+type SubtitleState =
+  | { kind: 'idle' }
+  | { kind: 'generating' }
+  | { kind: 'done'; track: SubtitleTrack }
   | { kind: 'error'; message: string };
 
 function formatBytes(bytes: number): string {
@@ -26,31 +46,54 @@ function formatBytes(bytes: number): string {
   return `${value.toFixed(1)} ${units[unit]}`;
 }
 
+function formatTime(sec: number): string {
+  const total = Math.max(0, Math.floor(sec));
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+async function readError(res: Response): Promise<string> {
+  const data = (await res.json().catch(() => ({}))) as { error?: string };
+  return data.error ?? `Request failed (${res.status})`;
+}
+
 export function VideoUpload(): JSX.Element {
   const [file, setFile] = useState<File | null>(null);
-  const [state, setState] = useState<UploadState>({ kind: 'idle' });
+  const [upload, setUpload] = useState<UploadState>({ kind: 'idle' });
+  const [subtitles, setSubtitles] = useState<SubtitleState>({ kind: 'idle' });
 
   function handleSelect(event: ChangeEvent<HTMLInputElement>): void {
     setFile(event.target.files?.[0] ?? null);
-    setState({ kind: 'idle' });
+    setUpload({ kind: 'idle' });
+    setSubtitles({ kind: 'idle' });
   }
 
   async function handleUpload(): Promise<void> {
     if (!file) return;
-    setState({ kind: 'uploading' });
+    setUpload({ kind: 'uploading' });
+    setSubtitles({ kind: 'idle' });
     try {
       const body = new FormData();
       body.append('video', file);
       const res = await fetch('/api/videos', { method: 'POST', body });
-      if (!res.ok) {
-        const data = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(data.error ?? `Upload failed (${res.status})`);
-      }
+      if (!res.ok) throw new Error(await readError(res));
       const video = (await res.json()) as UploadedVideo;
-      setState({ kind: 'done', video });
+      setUpload({ kind: 'done', video });
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      setState({ kind: 'error', message });
+      setUpload({ kind: 'error', message: err instanceof Error ? err.message : 'Unknown error' });
+    }
+  }
+
+  async function handleGenerate(videoId: string): Promise<void> {
+    setSubtitles({ kind: 'generating' });
+    try {
+      const res = await fetch(`/api/videos/${videoId}/subtitles`, { method: 'POST' });
+      if (!res.ok) throw new Error(await readError(res));
+      const track = (await res.json()) as SubtitleTrack;
+      setSubtitles({ kind: 'done', track });
+    } catch (err: unknown) {
+      setSubtitles({ kind: 'error', message: err instanceof Error ? err.message : 'Unknown error' });
     }
   }
 
@@ -61,19 +104,53 @@ export function VideoUpload(): JSX.Element {
       <button
         type="button"
         onClick={() => void handleUpload()}
-        disabled={!file || state.kind === 'uploading'}
+        disabled={!file || upload.kind === 'uploading'}
         style={{ marginLeft: '0.5rem' }}
       >
-        {state.kind === 'uploading' ? 'Uploading…' : 'Upload'}
+        {upload.kind === 'uploading' ? 'Uploading…' : 'Upload'}
       </button>
 
-      {state.kind === 'done' && (
-        <p>
-          ✅ Uploaded <strong>{state.video.originalName}</strong> (
-          {formatBytes(state.video.sizeBytes)}) — id {state.video.id}
-        </p>
+      {upload.kind === 'done' && (
+        <div style={{ marginTop: '1rem' }}>
+          <p>
+            ✅ Uploaded <strong>{upload.video.originalName}</strong> (
+            {formatBytes(upload.video.sizeBytes)})
+          </p>
+          <button
+            type="button"
+            onClick={() => void handleGenerate(upload.video.id)}
+            disabled={subtitles.kind === 'generating'}
+          >
+            {subtitles.kind === 'generating' ? 'Generating…' : 'Generate subtitles'}
+          </button>
+          {subtitles.kind === 'generating' && (
+            <p>Transcribing locally… the first run downloads the model.</p>
+          )}
+        </div>
       )}
-      {state.kind === 'error' && <p>❌ {state.message}</p>}
+      {upload.kind === 'error' && <p>❌ {upload.message}</p>}
+
+      {subtitles.kind === 'done' && (
+        <div style={{ marginTop: '1rem' }}>
+          <h3>Subtitles</h3>
+          <p style={{ color: '#666' }}>engine: {subtitles.track.engine}</p>
+          {subtitles.track.segments.length === 0 ? (
+            <p>No speech detected.</p>
+          ) : (
+            <ul>
+              {subtitles.track.segments.map((seg, i) => (
+                <li key={i}>
+                  <code>
+                    {formatTime(seg.startSec)}–{formatTime(seg.endSec)}
+                  </code>{' '}
+                  {seg.text}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+      {subtitles.kind === 'error' && <p>❌ {subtitles.message}</p>}
     </section>
   );
 }

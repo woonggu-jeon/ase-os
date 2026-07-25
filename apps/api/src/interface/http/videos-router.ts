@@ -9,6 +9,10 @@ import {
   toVideoView,
 } from '../../domain/video.js';
 import type { UploadVideoService } from '../../application/upload-video-service.js';
+import {
+  GenerateSubtitlesService,
+  VideoNotFoundError,
+} from '../../application/generate-subtitles-service.js';
 
 const UPLOAD_DIR = path.resolve(process.cwd(), 'uploads');
 
@@ -43,7 +47,10 @@ const upload = multer({
   },
 });
 
-export function createVideosRouter(service: UploadVideoService): Router {
+export function createVideosRouter(
+  service: UploadVideoService,
+  subtitleService: GenerateSubtitlesService,
+): Router {
   const router = Router();
 
   router.post('/', upload.single('video'), (req, res) => {
@@ -76,6 +83,29 @@ export function createVideosRouter(service: UploadVideoService): Router {
       return;
     }
     res.json(toVideoView(video));
+  });
+
+  // Generate subtitles for a video (runs a local Whisper model — may take a while).
+  router.post('/:id/subtitles', (req, res, next) => {
+    subtitleService
+      .generate(req.params.id)
+      .then((track) => res.status(201).json(track))
+      .catch((err: unknown) => {
+        if (err instanceof VideoNotFoundError) {
+          res.status(404).json({ error: 'Video not found' });
+          return;
+        }
+        next(err);
+      });
+  });
+
+  router.get('/:id/subtitles', (req, res) => {
+    const track = subtitleService.get(req.params.id);
+    if (!track) {
+      res.status(404).json({ error: 'No subtitles for this video' });
+      return;
+    }
+    res.json(track);
   });
 
   return router;

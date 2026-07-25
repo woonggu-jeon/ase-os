@@ -11,3 +11,4 @@ required by CORE_VALUES ("Explain Every Decision") and CONSTITUTION.
 | ADR | Title | Status |
 | --- | --- | --- |
 | [0001](./0001-architecture-layering.md) | Architecture Layering and AIProvider Placement | Accepted |
+| [0002](./0002-free-local-transcription.md) | Free, Local Transcription (deviation from Rule 6) | Accepted |
