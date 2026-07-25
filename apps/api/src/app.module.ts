@@ -9,6 +9,7 @@ import { VideosController } from './interface/http/videos.controller';
 import { UploadVideoService } from './application/upload-video.service';
 import { GenerateSubtitlesService } from './application/generate-subtitles.service';
 import { DetectScenesService } from './application/detect-scenes.service';
+import { BuildTimelineService } from './application/build-timeline.service';
 import { VIDEO_REPOSITORY } from './application/video-repository';
 import { SUBTITLE_REPOSITORY } from './application/subtitle-repository';
 import { SCENE_REPOSITORY } from './application/scene-repository';
@@ -25,6 +26,7 @@ import { SqliteSceneRepository } from './infrastructure/persistence/sqlite-scene
     UploadVideoService,
     GenerateSubtitlesService,
     DetectScenesService,
+    BuildTimelineService,
     { provide: DATABASE, useFactory: createDatabase },
     { provide: VIDEO_REPOSITORY, useClass: SqliteVideoRepository },
     { provide: SUBTITLE_REPOSITORY, useClass: SqliteSubtitleRepository },

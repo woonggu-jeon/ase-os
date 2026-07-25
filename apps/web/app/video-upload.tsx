@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type ChangeEvent } from 'react';
-import type { SceneList, SubtitleTrack, VideoView } from '@ase-os/shared';
+import type { SceneList, SubtitleTrack, Timeline, VideoView } from '@ase-os/shared';
 
 type UploadState =
   | { kind: 'idle' }
@@ -42,8 +42,8 @@ async function readError(res: Response): Promise<string> {
   return data.message ?? data.error ?? `Request failed (${res.status})`;
 }
 
-async function postJson<T>(url: string): Promise<T> {
-  const res = await fetch(url, { method: 'POST' });
+async function requestJson<T>(url: string, method: 'GET' | 'POST'): Promise<T> {
+  const res = await fetch(url, { method });
   if (!res.ok) throw new Error(await readError(res));
   return (await res.json()) as T;
 }
@@ -53,12 +53,14 @@ export function VideoUpload() {
   const [upload, setUpload] = useState<UploadState>({ kind: 'idle' });
   const [subtitles, setSubtitles] = useState<AsyncState<SubtitleTrack>>({ kind: 'idle' });
   const [scenes, setScenes] = useState<AsyncState<SceneList>>({ kind: 'idle' });
+  const [timeline, setTimeline] = useState<AsyncState<Timeline>>({ kind: 'idle' });
 
   function handleSelect(event: ChangeEvent<HTMLInputElement>): void {
     setFile(event.target.files?.[0] ?? null);
     setUpload({ kind: 'idle' });
     setSubtitles({ kind: 'idle' });
     setScenes({ kind: 'idle' });
+    setTimeline({ kind: 'idle' });
   }
 
   async function handleUpload(): Promise<void> {
@@ -81,10 +83,14 @@ export function VideoUpload() {
     }
   }
 
-  async function run<T>(url: string, set: (s: AsyncState<T>) => void): Promise<void> {
+  async function run<T>(
+    url: string,
+    set: (s: AsyncState<T>) => void,
+    method: 'GET' | 'POST' = 'POST',
+  ): Promise<void> {
     set({ kind: 'running' });
     try {
-      set({ kind: 'done', data: await postJson<T>(url) });
+      set({ kind: 'done', data: await requestJson<T>(url, method) });
     } catch (err: unknown) {
       set({
         kind: 'error',
@@ -136,6 +142,15 @@ export function VideoUpload() {
               disabled={scenes.kind === 'running'}
             >
               {scenes.kind === 'running' ? 'Detecting…' : 'Detect scenes'}
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                void run(`/api/videos/${upload.video.id}/timeline`, setTimeline, 'GET')
+              }
+              disabled={timeline.kind === 'running'}
+            >
+              {timeline.kind === 'running' ? 'Building…' : 'Build timeline'}
             </button>
           </div>
           {subtitles.kind === 'running' && (
@@ -189,6 +204,28 @@ export function VideoUpload() {
         </div>
       )}
       {scenes.kind === 'error' && <p>❌ {scenes.message}</p>}
+
+      {timeline.kind === 'done' && (
+        <div style={{ marginTop: '1rem' }}>
+          <h3>Timeline JSON</h3>
+          <p style={{ color: '#666' }}>
+            {formatTime(timeline.data.durationSec)} · {timeline.data.clips.length} clip(s) ·{' '}
+            {timeline.data.subtitles.length} subtitle(s)
+          </p>
+          <pre
+            style={{
+              background: '#f4f4f4',
+              padding: '0.75rem',
+              borderRadius: 6,
+              overflowX: 'auto',
+              fontSize: 12,
+            }}
+          >
+            {JSON.stringify(timeline.data, null, 2)}
+          </pre>
+        </div>
+      )}
+      {timeline.kind === 'error' && <p>❌ {timeline.message}</p>}
     </section>
   );
 }

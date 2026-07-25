@@ -21,11 +21,13 @@ import {
   toVideoView,
   type SceneList,
   type SubtitleTrack,
+  type Timeline,
   type VideoView,
 } from '@ase-os/shared';
 import { UploadVideoService } from '../../application/upload-video.service';
 import { GenerateSubtitlesService } from '../../application/generate-subtitles.service';
 import { DetectScenesService } from '../../application/detect-scenes.service';
+import { BuildTimelineService } from '../../application/build-timeline.service';
 
 const UPLOAD_DIR = path.resolve(process.cwd(), 'uploads');
 
@@ -58,6 +60,7 @@ export class VideosController {
     private readonly uploads: UploadVideoService,
     private readonly subtitles: GenerateSubtitlesService,
     private readonly scenes: DetectScenesService,
+    private readonly timeline: BuildTimelineService,
   ) {}
 
   @Post()
@@ -112,5 +115,11 @@ export class VideosController {
   @Get(':id/scenes')
   getScenes(@Param('id') id: string): SceneList {
     return this.scenes.get(id);
+  }
+
+  // Timeline is a projection over metadata + scenes + subtitles, built on demand.
+  @Get(':id/timeline')
+  getTimeline(@Param('id') id: string): Timeline {
+    return this.timeline.build(id);
   }
 }
